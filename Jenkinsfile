@@ -6,7 +6,7 @@ pipeline {
         // ===== FRONTEND BUILD =====
         stage('Build Frontend') {
             steps {
-                dir('reactfrontend') { // corrected folder name
+                dir('reactfrontend') { // frontend folder containing package.json
                     bat 'npm install'
                     bat 'npm run build'
                 }
@@ -29,8 +29,22 @@ pipeline {
         // ===== BACKEND BUILD =====
         stage('Build Backend') {
             steps {
-                dir('ExpenseBackend') { // confirm this folder contains pom.xml
-                    bat 'mvn clean package'
+                script {
+                    // Automatically find the folder containing pom.xml
+                    def backendDir = ''
+                    new File(pwd()).eachDir { dir ->
+                        if (new File(dir, 'pom.xml').exists()) {
+                            backendDir = dir.name
+                        }
+                    }
+                    if (backendDir) {
+                        echo "Found backend folder: ${backendDir}"
+                        dir(backendDir) {
+                            bat 'mvn clean package'
+                        }
+                    } else {
+                        error "No backend folder with pom.xml found!"
+                    }
                 }
             }
         }
@@ -38,18 +52,29 @@ pipeline {
         // ===== BACKEND DEPLOY =====
         stage('Deploy Backend to Tomcat') {
             steps {
-                bat '''
-                if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot.war" (
-                    del /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot.war"
-                )
-                if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot" (
-                    rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot"
-                )
-                copy "ExpenseBackend\\target\\*.war" "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot.war"
-                '''
+                script {
+                    def backendDir = ''
+                    new File(pwd()).eachDir { dir ->
+                        if (new File(dir, 'pom.xml').exists()) {
+                            backendDir = dir.name
+                        }
+                    }
+                    if (backendDir) {
+                        bat """
+                        if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot.war" (
+                            del /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot.war"
+                        )
+                        if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot" (
+                            rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot"
+                        )
+                        copy "${backendDir}\\target\\*.war" "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot.war"
+                        """
+                    } else {
+                        error "No backend folder with pom.xml found for deployment!"
+                    }
+                }
             }
         }
-
     }
 
     post {
