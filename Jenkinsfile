@@ -1,12 +1,25 @@
 pipeline {
     agent any
 
+    environment {
+        TOMCAT_PATH = 'C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps'
+        FRONTEND_NAME = 'jenkinsreact'
+        BACKEND_WAR = 'jenkinsfullstack.war'
+    }
+
     stages {
+
+        // ===== CHECKOUT SCM =====
+        stage('Checkout Code') {
+            steps {
+                checkout scm
+            }
+        }
 
         // ===== FRONTEND BUILD =====
         stage('Build Frontend') {
             steps {
-                dir('reactfrontend') { // frontend folder containing package.json
+                dir('reactfrontend') {
                     bat 'npm install'
                     bat 'npm run build'
                 }
@@ -17,11 +30,9 @@ pipeline {
         stage('Deploy Frontend to Tomcat') {
             steps {
                 bat """
-                if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsreact" (
-                    rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsreact"
-                )
-                mkdir "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsreact"
-                xcopy /E /I /Y reactfrontend\\dist\\* "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsreact"
+                if exist "${TOMCAT_PATH}\\${FRONTEND_NAME}" rmdir /S /Q "${TOMCAT_PATH}\\${FRONTEND_NAME}"
+                mkdir "${TOMCAT_PATH}\\${FRONTEND_NAME}"
+                xcopy /E /I /Y reactfrontend\\dist\\* "${TOMCAT_PATH}\\${FRONTEND_NAME}"
                 """
             }
         }
@@ -29,7 +40,7 @@ pipeline {
         // ===== BACKEND BUILD =====
         stage('Build Backend') {
             steps {
-                dir('ExpenseBackend') { // replace with actual backend folder containing pom.xml
+                dir('springbootbackend') {
                     bat 'mvn clean package'
                 }
             }
@@ -39,25 +50,18 @@ pipeline {
         stage('Deploy Backend to Tomcat') {
             steps {
                 bat """
-                if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot.war" (
-                    del /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot.war"
-                )
-                if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot" (
-                    rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot"
-                )
-                copy "ExpenseBackend\\target\\*.war" "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot.war"
+                copy springbootbackend\\target\\${BACKEND_WAR} "${TOMCAT_PATH}"
                 """
             }
         }
-
     }
 
     post {
         success {
-            echo 'Deployment Successful!'
+            echo 'Pipeline completed successfully!'
         }
         failure {
-            echo 'Pipeline Failed.'
+            echo 'Pipeline failed. Check the logs for details.'
         }
     }
 }
