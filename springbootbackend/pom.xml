@@ -11,6 +11,7 @@
 	<groupId>com.klef.dev</groupId>
 	<artifactId>springbootbackend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
+	<packaging>war</packaging>
 	<name>springbootbackend</name>
 	<description>Spring Boot Backend Project</description>
 	<url/>
@@ -63,6 +64,7 @@
 	</dependencies>
 
 	<build>
+	<finalName>jenkinsfullstack</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
