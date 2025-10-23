@@ -29,7 +29,7 @@ pipeline {
         // ===== BACKEND BUILD =====
         stage('Build Backend') {
             steps {
-                dir('ExpenseBackend') { // confirm this folder contains pom.xml
+                dir('ExpenseBackend') { // replace with actual backend folder containing pom.xml
                     bat 'mvn clean package'
                 }
             }
@@ -38,7 +38,7 @@ pipeline {
         // ===== BACKEND DEPLOY =====
         stage('Deploy Backend to Tomcat') {
             steps {
-                bat '''
+                bat """
                 if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot.war" (
                     del /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot.war"
                 )
@@ -46,7 +46,7 @@ pipeline {
                     rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot"
                 )
                 copy "ExpenseBackend\\target\\*.war" "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsspringboot.war"
-                '''
+                """
             }
         }
 
