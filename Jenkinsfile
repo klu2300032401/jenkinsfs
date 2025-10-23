@@ -3,13 +3,13 @@ pipeline {
 
     environment {
         TOMCAT_PATH = 'C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps'
-        FRONTEND_NAME = 'jenkinsreact'
+        FRONTEND_NAME = 'jenkinsfrontendapi'   // Must match base in vite.config.js
         BACKEND_WAR = 'jenkinsfullstack.war'
     }
 
     stages {
 
-        // ===== CHECKOUT SCM =====
+        // ===== CHECKOUT CODE =====
         stage('Checkout Code') {
             steps {
                 checkout scm
