@@ -1,20 +1,7 @@
 pipeline {
     agent any
 
-    environment {
-        TOMCAT_PATH = 'C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps'
-        FRONTEND_NAME = 'jenkinsfrontendapi'   // Must match base in vite.config.js
-        BACKEND_WAR = 'jenkinsfullstack.war'
-    }
-
     stages {
-
-        // ===== CHECKOUT CODE =====
-        stage('Checkout Code') {
-            steps {
-                checkout scm
-            }
-        }
 
         // ===== FRONTEND BUILD =====
         stage('Build Frontend') {
@@ -30,9 +17,11 @@ pipeline {
         stage('Deploy Frontend to Tomcat') {
             steps {
                 bat """
-                if exist "${TOMCAT_PATH}\\${FRONTEND_NAME}" rmdir /S /Q "${TOMCAT_PATH}\\${FRONTEND_NAME}"
-                mkdir "${TOMCAT_PATH}\\${FRONTEND_NAME}"
-                xcopy /E /I /Y reactfrontend\\dist\\* "${TOMCAT_PATH}\\${FRONTEND_NAME}"
+                if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsfrontendapi" (
+                    rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsfrontendapi"
+                )
+                mkdir "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsfrontendapi"
+                xcopy /E /I /Y reactfrontend\\dist\\* "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsfrontendapi"
                 """
             }
         }
@@ -48,20 +37,24 @@ pipeline {
 
         // ===== BACKEND DEPLOY =====
         stage('Deploy Backend to Tomcat') {
-            steps {
-                bat """
-                copy springbootbackend\\target\\${BACKEND_WAR} "${TOMCAT_PATH}"
-                """
-            }
-        }
+        steps {
+        bat '''
+            if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsfullstack.war" (del /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsfullstack.war" )
+            if exist "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsfullstack" (rmdir /S /Q "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsfullstack" )
+            copy "springbootbackend\\target\\*.war" "C:\\Program Files\\Apache Software Foundation\\Tomcat 10.1\\webapps\\jenkinsfullstack.war"
+        '''
+      }
+     }
+
+
     }
 
     post {
         success {
-            echo 'Pipeline completed successfully!'
+            echo 'Deployment Successful!'
         }
         failure {
-            echo 'Pipeline failed. Check the logs for details.'
+            echo 'Pipeline Failed.'
         }
     }
 }
